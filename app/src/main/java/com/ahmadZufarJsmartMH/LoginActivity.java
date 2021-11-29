@@ -21,110 +21,65 @@ import com.google.gson.Gson;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class LoginActivity extends AppCompatActivity{
+public class LoginActivity extends AppCompatActivity implements View.OnClickListener, Response.Listener<String>, Response.ErrorListener {
+
     private static final Gson gson = new Gson();
-    private static Account loggedAccount = null;
+    private static Account loggedAccount;
+    private EditText edtEmail;
+    private EditText edtPassword;
+    private Button btnLogin;
+    private TextView txtRegister;
+
+    public static Account getLoggedAccount(){
+        return loggedAccount;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        EditText edtEmail= findViewById(R.id.loginEmail);
-        EditText edtPassword = findViewById(R.id.loginPass);
-        Button btnLogin = findViewById(R.id.butLogin);
-        TextView txtRegister = findViewById(R.id.butRegister);
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Response.Listener<String> listener = new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            Toast.makeText(LoginActivity.this, "Login Success", Toast.LENGTH_SHORT).show();
-                            JSONObject object = new JSONObject(response);
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                            loggedAccount = gson.fromJson(object.toString(), Account.class);
-                            startActivity(intent);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+        edtEmail = findViewById(R.id.loginEmail);
+        edtPassword = findViewById(R.id.loginPass);
+        btnLogin = findViewById(R.id.butLogin);
+        txtRegister = findViewById(R.id.butRegister);
 
-                    }
-                };
-                Response.ErrorListener errorListener = new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(LoginActivity.this, "Login Failed", Toast.LENGTH_SHORT).show();
-                    }
-                };
-                String email = edtEmail.getText().toString();
-                String password = edtPassword.getText().toString();
-                LoginRequest loginRequest = new LoginRequest(email, password, listener, errorListener);
-                RequestQueue queue = Volley.newRequestQueue(LoginActivity.this);
-                queue.add(loginRequest);
-            }
-        });
+        btnLogin.setOnClickListener(this);
+        txtRegister.setOnClickListener(this);
     }
 
-    public static Account getLoggedAccount(){
-        return loggedAccount;
+    @Override
+    public void onClick(View v) {
+        if(v.getId()==R.id.butLogin){
+            String dataEmail = edtEmail.getText().toString().trim();
+            String dataPassword = edtPassword.getText().toString().trim();
+            LoginRequest loginRequest = new LoginRequest(dataEmail, dataPassword, this, this);
+            RequestQueue requestQueue = Volley.newRequestQueue(this);
+            requestQueue.add(loginRequest);
+        }
+        else if(v.getId()==R.id.butRegister){
+            Intent moveIntent = new Intent(LoginActivity.this, RegisterActivity.class);
+            startActivity(moveIntent);
+        }
+
+    }
+
+    @Override
+    public void onResponse(String response) {
+        Intent moveIntent = new Intent(LoginActivity.this, MainActivity.class);
+        try{
+            JSONObject jsonObject = new JSONObject(response);
+            loggedAccount = gson.fromJson(jsonObject.toString(), Account.class);
+        }catch (Exception e){
+            Toast.makeText(this, "Login Failed", Toast.LENGTH_LONG).show();
+            return;
+        }
+        Toast.makeText(this, "Login Success", Toast.LENGTH_LONG).show();
+        startActivity(moveIntent);
+    }
+
+    @Override
+    public void onErrorResponse(VolleyError error) {
+        Toast.makeText(this, "Login Failed", Toast.LENGTH_LONG).show();
     }
 }
-
-//public class LoginActivity extends AppCompatActivity implements View.OnClickListener{
-//
-//    private static final Gson gson = new Gson();
-//    private static Account loggedAccount;
-//    private EditText editEmail;
-//    private EditText editPassword;
-//    private Button btnLogin;
-//    private TextView btnRegister;
-//
-//    public static Account getLoggedAccount(){
-//        return loggedAccount;
-//    }
-//
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_login);
-//
-//        editEmail = findViewById(R.id.loginEmail);
-//        editPassword = findViewById(R.id.loginPass);
-//        btnLogin = findViewById(R.id.butLogin);
-//        btnRegister = findViewById(R.id.butRegister);
-//
-//        btnLogin.setOnClickListener(this);
-//        btnRegister.setOnClickListener(this);
-//    }
-//
-//    @Override
-//    public void onClick(View v) {
-//        if(v.getId()==R.id.butLogin){
-//            String dataEmail = editEmail.getText().toString().trim();
-//            String dataPassword = editPassword.getText().toString().trim();
-//        }
-//        else if(v.getId()==R.id.butRegister){
-//            Intent moveIntent = new Intent(LoginActivity.this, RegisterActivity.class);
-//            startActivity(moveIntent);
-//        }
-//    }
-//
-//    public void onResponse(String response) {
-//        Intent moveIntent = new Intent(LoginActivity.this, MainActivity.class);
-//        try{
-//            JSONObject jsonObject = new JSONObject(response);
-//            moveIntent.putExtra("id", jsonObject.getInt("id"));
-//        }catch (Exception e){
-//            Toast.makeText(this, "Login Gagal:(", Toast.LENGTH_LONG).show();
-//            return;
-//        }
-//        Toast.makeText(this, "Login Berhasi:)", Toast.LENGTH_LONG).show();
-//        startActivity(moveIntent);
-//    }
-//
-//    public void onErrorResponse(VolleyError error) {
-//        Toast.makeText(this, "Login Gagal:(", Toast.LENGTH_LONG).show();
-//    }
-//}

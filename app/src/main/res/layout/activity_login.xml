@@ -41,6 +41,7 @@
         android:backgroundTint="@color/grey"/>
 
     <TextView
+        android:id="@+id/butRegister"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="100dp"
