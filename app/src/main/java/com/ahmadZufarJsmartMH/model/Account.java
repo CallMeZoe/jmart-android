@@ -1,6 +1,6 @@
 package com.ahmadZufarJsmartMH.model;
 
-public class Account extends Seriazable{
+public class Account extends Serializable {
     public double balance;
     public String email;
     public String name;
