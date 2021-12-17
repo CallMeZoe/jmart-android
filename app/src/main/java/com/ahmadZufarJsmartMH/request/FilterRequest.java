@@ -23,7 +23,7 @@ public class FilterRequest extends StringRequest {
         params.put("category", category.toString());
     }
 
-    //Request ketika hanya page yang tidak diisi
+    //Ketika pageSize tidak terisi
     public FilterRequest(int page, int accountId, String search, int minPrice, int maxPrice, ProductCategory category, Response.Listener<String> listener, Response.ErrorListener errorListener) {
         super(Method.GET, String.format(URL_FORMAT, page, "", accountId, search, minPrice, maxPrice, category.toString()), listener, errorListener);
         params = new HashMap<>();
@@ -36,7 +36,7 @@ public class FilterRequest extends StringRequest {
         params.put("category", category.toString());
     }
 
-    //Request jika minPrice dan maxPrice tidak diisi
+    //Ketika minPrice dan maxPrice tidak terisi
     public FilterRequest(int page, int pageSize, int accountId, String search, ProductCategory category, Response.Listener<String> listener, Response.ErrorListener errorListener) {
         super(Method.GET, String.format(URL_FORMAT, page, pageSize, accountId, search, "", "", category.toString()), listener, errorListener);
         params = new HashMap<>();
@@ -49,7 +49,7 @@ public class FilterRequest extends StringRequest {
         params.put("category", category.toString());
     }
 
-    //Request jika hanya maxPrice yang tidak diisi
+    //Ketika maxPrice tidak terisi
     public FilterRequest(int page, int pageSize, int accountId, int minPrice, String search, ProductCategory category, Response.Listener<String> listener, Response.ErrorListener errorListener) {
         super(Method.GET, String.format(URL_FORMAT, page, pageSize, accountId, search, minPrice, "", category.toString()), listener, errorListener);
         params = new HashMap<>();
@@ -62,7 +62,7 @@ public class FilterRequest extends StringRequest {
         params.put("category", category.toString());
     }
 
-    //Request jika hanya minPrice yang tidak diisi
+    //Ketika minPrice tidak terisi
     public FilterRequest(ProductCategory category, int page, int pageSize, int accountId, int maxPrice, String search, Response.Listener<String> listener, Response.ErrorListener errorListener) {
         super(Method.GET, String.format(URL_FORMAT, page, pageSize, accountId, search, "", maxPrice, category.toString()), listener, errorListener);
         params = new HashMap<>();
@@ -75,7 +75,7 @@ public class FilterRequest extends StringRequest {
         params.put("category", category.toString());
     }
 
-    //Request jika minPrice dan maxPrice tidak diisi serta pagenya tidak diisi
+    //Ketika minPrice,maxPrice dan pageSize tidak terisi
     public FilterRequest(int page, int accountId, String search, ProductCategory category, Response.Listener<String> listener, Response.ErrorListener errorListener) {
         super(Method.GET, String.format(URL_FORMAT, page, "", accountId, search, "", "", category.toString()), listener, errorListener);
         params = new HashMap<>();
@@ -88,7 +88,7 @@ public class FilterRequest extends StringRequest {
         params.put("category", category.toString());
     }
 
-    //Request jika hanya maxPrice yang tidak diisi serta pagenya tidak diisi
+    //Ketika maxPrice dan pageSize tidak terisi
     public FilterRequest(int page, int accountId, String search, int minPrice, ProductCategory category, Response.Listener<String> listener, Response.ErrorListener errorListener) {
         super(Method.GET, String.format(URL_FORMAT, page, "", accountId, search, minPrice, "", category.toString()), listener, errorListener);
         params = new HashMap<>();
@@ -101,7 +101,7 @@ public class FilterRequest extends StringRequest {
         params.put("category", category.toString());
     }
 
-    //Request jika hanya minPrice yang tidak diisi serta pagenya tidak diisi
+    //Ketika minPrice dan pageSize tidak terisi
     public FilterRequest(String search, int page, int accountId, int maxPrice, ProductCategory category, Response.Listener<String> listener, Response.ErrorListener errorListener) {
         super(Method.GET, String.format(URL_FORMAT, page, "", accountId, search, "", maxPrice, category.toString()), listener, errorListener);
         params = new HashMap<>();

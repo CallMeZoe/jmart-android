@@ -13,11 +13,14 @@
         android:theme="@style/Theme.Jmartandroid"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".InvoiceActivity"
+            android:exported="false" />
+        <activity
             android:name=".CreateProductActivity"
             android:exported="false" />
         <activity
             android:name=".AboutMeActivity"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="false" />

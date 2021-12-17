@@ -13,14 +13,12 @@ public class RegisterStoreRequest extends StringRequest {
     private static final String URL = "http://192.168.100.10:1805/account/%d/registerStore";
     private final Map<String, String> params;
 
-    public RegisterStoreRequest(int id, String StoreName, String StoreAddress, String StorePhone, Response.Listener<String> listener, Response.ErrorListener errorListener){
-        super(Request.Method.POST, String.format(URL, id), listener, errorListener);
+    public RegisterStoreRequest(int id, String storeName, String storeAddress, String storePhoneNumber, Response.Listener<String> listener, Response.ErrorListener errorListener) {
+        super(Method.POST, String.format(URL, id), listener, errorListener);
         params = new HashMap<>();
-        params.put("id", String.valueOf(id));
-        params.put("name", StoreName);
-        params.put("address", StoreAddress);
-        params.put("phoneNumber", StorePhone);
-
+        params.put("name", storeName);
+        params.put("address", storeAddress);
+        params.put("phoneNumber", storePhoneNumber);
     }
 
     public Map<String, String> getParams(){

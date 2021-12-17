@@ -25,6 +25,12 @@ import com.google.gson.Gson;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Merupakan Class yang mengatur Activity Create Product untuk membuat produk baru
+ * @author Ahmad Zufar A
+ * @version 17 Desember 2021
+ */
+
 public class CreateProductActivity extends AppCompatActivity {
 
     private String[] Category = {"BOOK", "KITCHEN", "ELECTRONIC", "FASHION", "GAMING", "GADGET", "MOTHERCARE", "COSMETICS",

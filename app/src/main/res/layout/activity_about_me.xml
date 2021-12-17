@@ -125,6 +125,17 @@
         </LinearLayout>
 
         <Button
+            android:layout_gravity="center"
+            android:id="@+id/butGoInvoice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Invoice"
+            android:textColor="@color/black"
+            android:backgroundTint="@color/grey"
+            android:textSize="15dp"
+            android:layout_margin="10dp"/>
+
+        <Button
             android:id="@+id/butRegisterStore"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -146,7 +157,7 @@
             android:backgroundTint="@color/white"
             android:elevation="5dp"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <TextView
                 android:layout_width="match_parent"
@@ -224,7 +235,7 @@
             android:background="@drawable/shape"
             android:backgroundTint="@color/white"
             android:elevation="5dp"
-            android:visibility="visible">
+            android:visibility="gone">
 
             <TextView
                 android:layout_width="match_parent"

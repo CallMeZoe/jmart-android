@@ -21,6 +21,12 @@ import com.google.gson.Gson;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Merupakan Class yang mengatur Activity Login untuk melakukan login
+ * @author Ahmad Zufar A
+ * @version 17 Desember 2021
+ */
+
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener, Response.Listener<String>, Response.ErrorListener {
 
     private static final Gson gson = new Gson();

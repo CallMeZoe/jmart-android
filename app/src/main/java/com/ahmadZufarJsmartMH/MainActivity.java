@@ -1,33 +1,42 @@
 package com.ahmadZufarJsmartMH;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
-import androidx.cardview.widget.CardView;
-
-import android.content.Context;
+import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+
+import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
+import androidx.viewpager.widget.ViewPager;
+
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.Filter;
-import android.widget.Filterable;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.ahmadZufarJsmartMH.model.Payment;
 import com.ahmadZufarJsmartMH.model.Product;
 import com.ahmadZufarJsmartMH.model.ProductCategory;
 import com.ahmadZufarJsmartMH.request.FilterRequest;
+import com.ahmadZufarJsmartMH.request.PaymentRequest;
 import com.ahmadZufarJsmartMH.request.RequestFactory;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -39,6 +48,7 @@ import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -46,69 +56,374 @@ import java.util.List;
 
 import com.ahmadZufarJsmartMH.model.Account;
 
+/**
+ * Merupakan Class yang mengatur Activity Main sebagai class utama
+ * @author Ahmad Zufar A
+ * @version 17 Desember 2021
+ */
+
 public class MainActivity extends AppCompatActivity {
-    private TabLayout tabLayout;
-    private CardView cvProduct, cvFilter;
-    private EditText edtPage, edtName, edtLowestPrice, edtHighestPrice;
-    private CheckBox checkBoxNew, checkBoxUsed;
-    private Spinner spinner;
-    private Button prevBtn, nextBtn, goBtn, btnApply, btnCancel;
-    private ListView listView;
+    private String[] productCategory = {"BOOK", "KITCHEN", "ELECTRONIC", "FASHION", "GAMING", "GADGET", "MOTHERCARE",
+            "COSMETICS", "HEALTHCARE", "FURNITURE", "JEWELRY", "TOYS", "FNB", "STATIONERY", "SPORTS", "AUTOMOTIVE",
+            "PETCARE", "ART_CRAFT", "CARPENTRY", "MISCELLANEOUS", "PROPERTY", "TRAVEL", "WEDDING"};
+
+    //Products
+    private static final String ARG_PARAM1 = "param1";
+    private static final String ARG_PARAM2 = "param2";
+    private List<Product> PList = new ArrayList<>();
     private static final Gson gson = new Gson();
-    List<Product> productList = new ArrayList<>();
-    List<String> productNameList = new ArrayList<>();
-    private Account account;
-//    private CustomAdapter customAdapter;
-    public boolean applyFilter = false;
+    private ListView listView;
+    private Button prevbtn;
+    private Button nextbtn;
+    private Button gobtn;
+    private Button buynowbtn;
+    private Button cancelbtn;
+    private Button purchasebtn;
+    private EditText edtfilterproduct;
+    int page = 0;
+    private Toolbar mTopToolbar;
+    private CardView productcardView, filtercardView;
+    private boolean SignFilter = false;
+    double discount = 0;
+
+    //Filter
+    private EditText editName;
+    private EditText lowestPrice;
+    private EditText highestPrice;
+    private CheckBox checkNew;
+    private CheckBox checkUsed;
+    private Button applyButton;
+    private Button clearButton;
+    private Spinner spinner;
+
+    private LinearLayout linearlayoutBuyNow;
+    private Payment payment;
+
+    Account account = LoginActivity.getLoggedAccount();
+
+    /**
+     * Method yang digunakan untuk melakukan inisialisasi awal saat memulai activity
+     * @param savedInstanceState state pada activity
+     */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        takeBalance();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        tabLayout = findViewById(R.id.tab_layout);
-        cvProduct = findViewById(R.id.cv_product);
-        cvFilter = findViewById(R.id.cv_filter);
-        edtPage = findViewById(R.id.edt_page);
-        prevBtn = findViewById(R.id.prev_btn);
-        nextBtn = findViewById(R.id.next_btn);
-        listView = findViewById(R.id.product_list);
-        goBtn = findViewById(R.id.go_btn);
-        edtName = findViewById(R.id.edt_name_filter);
-        edtLowestPrice = findViewById(R.id.edt_lowest_price_filter);
-        edtHighestPrice = findViewById(R.id.edt_highest_price_filter);
-        checkBoxNew = findViewById(R.id.checkbox_new);
-        checkBoxUsed = findViewById(R.id.checkbox_used);
-        spinner = findViewById(R.id.spinner);
-        btnApply = findViewById(R.id.btn_apply_filter);
-        btnCancel = findViewById(R.id.btn_cancel_filter);
 
-        //List buat dimasukkan ke spinner di tab filter
-        List<String> list = new ArrayList<>();
-        for(ProductCategory category : ProductCategory.values()){
-            list.add(category.toString());
-        }
-//        ArrayAdapter<String> adapter = new ArrayAdapter(MainActivity.this, R.layout.row_product_category, list);
-//        spinner.setAdapter(adapter);
+        //Inisialisasi products
+        prevbtn = findViewById(R.id.prev);
+        nextbtn = findViewById(R.id.next);
+        gobtn = findViewById(R.id.go);
+        edtfilterproduct = findViewById(R.id.editPage);
+        listView = findViewById(R.id.listViewProduct);
 
-        int pageNumber = Integer.valueOf(edtPage.getText().toString());
-        cvProduct.setVisibility(View.VISIBLE);
-        cvFilter.setVisibility(View.GONE);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            /**
+             * method yang digunakan untuk dialog pada detail productnya
+             * @param parent
+             * @param view
+             * @param position
+             * @param id
+             */
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                final Dialog dialog = new Dialog(MainActivity.this);
+                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                dialog.setCancelable(true);
+                dialog.setContentView(R.layout.product_detail);
+                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+                final TextView productdetailsName = dialog.findViewById(R.id.productDetailsName);
+                final TextView productdetailsWeight = dialog.findViewById(R.id.productDetailsWeight);
+                final TextView productdetailsPrice = dialog.findViewById(R.id.productDetailsPrice);
+                final TextView productdetailsDiscount = dialog.findViewById(R.id.productDetailsDiscount);
+                final TextView productdetailsConditionUsed = dialog.findViewById(R.id.productDetailsConditionUsed);
+                final TextView productdetailsCategory = dialog.findViewById(R.id.productDetailsCategory);
+                final TextView productdetailsShipmentPlan = dialog.findViewById(R.id.productDetailsShipmentPlan);
+
+                final TextView productdetailsTotalPrice = dialog.findViewById(R.id.productdetailsTotalPrice);
+                final EditText productdetailsQuantity = dialog.findViewById(R.id.productDetailsQuantity);
+                final EditText productdetailsAddress = dialog.findViewById(R.id.productdetailsAddress);
+
+                buynowbtn = dialog.findViewById(R.id.productDetailsBuyNow);
+                linearlayoutBuyNow = dialog.findViewById(R.id.linearLayoutBuyNow);
+                cancelbtn = dialog.findViewById(R.id.productDetailsCancel);
+                purchasebtn = dialog.findViewById(R.id.productDetailsPurchase);
+                Product product = PList.get(position);
+
+                /**
+                 * Merupakan pengaturan button Buy Now pada product detail
+                 */
+                buynowbtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v){
+                        buynowbtn.setVisibility(v.GONE);
+                        linearlayoutBuyNow.setVisibility(v.VISIBLE);
+                        Toast.makeText(getApplicationContext(),"Buy Now clicked",Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                /**
+                 * Merupakan pengaturan cancel button saat di click
+                 */
+                cancelbtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v){
+                        buynowbtn.setVisibility(v.VISIBLE);
+                        linearlayoutBuyNow.setVisibility(v.GONE);
+                        Toast.makeText(getApplicationContext(),"Cancel Clicked",Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                /**
+                 * Merupakan purchase button saat di click
+                 */
+                purchasebtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        boolean isEmptyFields = false;
+                        if (TextUtils.isEmpty(productdetailsAddress.getText().toString())) {
+                            isEmptyFields = true;
+                            productdetailsAddress.setError("Address must be filled!");
+                        }
+                        if (TextUtils.isEmpty(productdetailsQuantity.getText().toString())) {
+                            isEmptyFields = true;
+                            productdetailsQuantity.setError("Quantity must be filled!");
+                        }
+                        if (!isEmptyFields) {
+                            double totalprice = Double.valueOf(productdetailsTotalPrice.getText().toString().substring(3));
+                            if (account.balance < totalprice) {
+                                Toast.makeText(MainActivity.this, "Your balance is too low!", Toast.LENGTH_SHORT).show();
+                            } else if (account.balance >= totalprice) {
+                                Response.Listener<String> listenerCreatePayment = new Response.Listener<String>() {
+                                    @Override
+                                    public void onResponse(String response) {
+                                        JSONObject object = null;
+                                        try {
+                                            object = new JSONObject(response);
+                                            if (object != null) {
+                                                Toast.makeText(MainActivity.this, "Payment Completed!", Toast.LENGTH_SHORT).show();
+                                                dialog.dismiss();
+                                            }
+                                            payment = gson.fromJson(response, Payment.class);
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                };
+
+                                Response.ErrorListener errorListenerCreatePayment = new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+                                        Toast.makeText(MainActivity.this, "Payment Failed!", Toast.LENGTH_SHORT).show();
+                                        Log.d("ERROR", error.toString());
+                                    }
+                                };
+                                PaymentRequest createPaymentRequest = new PaymentRequest(account.id, product.id, Integer.parseInt(productdetailsQuantity.getText().toString()), productdetailsAddress.getText().toString(), product.shipmentPlans, product.accountId,product.discount, listenerCreatePayment, errorListenerCreatePayment);
+                                RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+                                queue.add(createPaymentRequest);
+                            }
+
+                        }
+                    }
+                });
+
+                /**
+                 * Merupakan pengaturan saat ada perubahan input
+                 */
+                productdetailsQuantity.addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+                    }
+
+                    /**
+                     * Merupakan method untuk mengatur ketika input quantity masuk
+                     * @param s
+                     * @param start
+                     * @param before
+                     * @param count
+                     */
+                    @Override
+                    public void onTextChanged(CharSequence s, int start, int before, int count) {
+                        if(productdetailsQuantity.getText().toString().equals("")){
+
+                        }
+                        else{
+                            if(product.discount == 0){
+                                productdetailsTotalPrice.setText("Rp. " + ((product.price * Integer.valueOf(productdetailsQuantity.getText().toString()))));
+                            }
+                            discount = product.price * (product.discount / (100));
+                            productdetailsTotalPrice.setText("Rp. " + ((product.price - discount) * Integer.valueOf(productdetailsQuantity.getText().toString())));
+                        }
+                    }
+
+                    @Override
+                    public void afterTextChanged(Editable s) {
+
+                    }
+                });
+
+
+                String ShipmentPlans = "REGULER";
+                if (product.shipmentPlans == 1) {
+                    ShipmentPlans = "INSTANT";
+                } else if (product.shipmentPlans == 2) {
+                    ShipmentPlans = "SAME DAY";
+                } else if (product.shipmentPlans == 4) {
+                    ShipmentPlans = "NEXT DAY";
+                } else if (product.shipmentPlans == 8) {
+                    ShipmentPlans = "REGULER";
+                } else if (product.shipmentPlans == 16) {
+                    ShipmentPlans = "KARGO";
+                }
+
+                String condition;
+                if (product.conditionUsed) { //kondisi true
+                    condition = "USED";
+                } else {
+                    condition = "NEW";
+                }
+
+
+                productdetailsName.setText(product.name);
+                productdetailsWeight.setText(product.weight + " Kg");
+                productdetailsPrice.setText("Rp. " + product.price);
+                productdetailsDiscount.setText(product.discount + " %");
+                productdetailsConditionUsed.setText(condition);
+                productdetailsCategory.setText(product.category + "");
+                productdetailsShipmentPlan.setText(ShipmentPlans);
+                productdetailsTotalPrice.setText("Rp. " + product.price);
+
+                dialog.show();
+            }
+        });
+
+        GetshowProductList(0,3);
+
+
+        /**
+         * Merupakan pengaturan button pada Product
+         */
+        gobtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                page = Integer.valueOf(edtfilterproduct.getText().toString());
+                page--;
+                if (SignFilter) {
+                    GetshowFilterProductList(page, 3);
+                } else {
+                    GetshowProductList(page,3);
+                }
+            }
+        });
+
+        /**
+         * Merupakan pengaturan previous button
+         */
+        prevbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (page == 0) {
+                    Toast.makeText(MainActivity.this, "Error! Already in Page 1!", Toast.LENGTH_SHORT).show();
+                } else if (page >= 1) {
+                    page--;
+                    if (SignFilter) {
+                        GetshowFilterProductList(page, 3);
+                    } else {
+                        GetshowProductList(page,3);
+                    }
+                }
+            }
+        });
+
+        /**
+         * Merupakan pengaturan next button
+         */
+        nextbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                page++;
+                if (SignFilter) {
+                    GetshowFilterProductList(page, 3);
+                } else {
+                    GetshowProductList(page,3);
+                }
+            }
+        });
+
+
+        //Filter
+        editName = findViewById(R.id.name);
+        lowestPrice = findViewById(R.id.lowestprice);
+        highestPrice = findViewById(R.id.highestprice);
+        checkNew = findViewById(R.id.checknew);
+        checkUsed = findViewById(R.id.checkused);
+        applyButton = findViewById(R.id.appplybutton);
+        clearButton = findViewById(R.id.clearbutton);
+
+        /**
+         * Merupakan pengaturan apply button
+         */
+        applyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                GetshowFilterProductList(0, 3);
+                SignFilter = true;
+                edtfilterproduct.setText("" + 1);
+
+
+            }
+        });
+
+        /**
+         * Merupakan pengaturan clear button
+         */
+        clearButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                page = 0;
+                GetshowProductList(page,3);
+                SignFilter = false;
+                edtfilterproduct.setText("" + 1);
+                Toast.makeText(MainActivity.this, "Filter Cleared!", Toast.LENGTH_SHORT).show();
+
+            }
+        });
+
+
+        /**
+         * Merupakan pengaturan spinner
+         */
+        spinner = (Spinner) findViewById(R.id.spinnerproduct);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_spinner_item, productCategory);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+
+        //Mengatur tab
+        CardView productcardView = findViewById(R.id.productCardView);
+        CardView filtercardView = findViewById(R.id.filterCardView);
+        TabLayout tabLayout = findViewById(R.id.tab_layout);
+
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                switch (tab.getPosition()){
+                /**
+                 * Merupakan method sebagai pengaturan tab selection antara product dengan filter
+                 * @param tab
+                 */
+                switch (tab.getPosition()) {
                     case 0:
-                        Toast.makeText(MainActivity.this, "POSITION 0", Toast.LENGTH_SHORT).show();
-                        cvProduct.setVisibility(View.VISIBLE);
-                        cvFilter.setVisibility(View.GONE);
+                        productcardView.setVisibility(View.VISIBLE);
+                        filtercardView.setVisibility(View.GONE);
                         break;
                     case 1:
-                        Toast.makeText(MainActivity.this, "POSITION 1", Toast.LENGTH_SHORT).show();
-                        cvProduct.setVisibility(View.GONE);
-                        cvFilter.setVisibility(View.VISIBLE);
+                        filtercardView.setVisibility(View.VISIBLE);
+                        productcardView.setVisibility(View.GONE);
                         break;
                     default:
-                        Toast.makeText(MainActivity.this, "KAGA MASUK KE POSITION MANAPUN", Toast.LENGTH_SHORT).show();
                         break;
                 }
             }
@@ -123,100 +438,98 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        account = LoginActivity.getLoggedAccount();
-        getProductList(pageNumber - 1, 1);          //page di backend dimulai dari 0
-
-        nextBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                int pageNow = Integer.valueOf(edtPage.getText().toString());
-                edtPage.setText((pageNow + 1) + "");
-                int pageNext = Integer.valueOf(edtPage.getText().toString());
-                if(applyFilter){
-                    getFilteredProductList(pageNext - 1, 1);
-                }
-                else {
-                    getProductList(pageNext - 1, 1);
-                }
-            }
-        });
-
-        prevBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                int pageNow = Integer.valueOf(edtPage.getText().toString());
-                edtPage.setText((pageNow - 1) + "");
-                int pagePrev = Integer.valueOf(edtPage.getText().toString());
-                if(applyFilter){
-                    getFilteredProductList(pagePrev - 1, 1);
-                }
-                else{
-                    getProductList(pagePrev - 1, 1);
-                }
-            }
-        });
-
-        goBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                int pageNow = Integer.valueOf(edtPage.getText().toString());
-                if(applyFilter){
-                    getFilteredProductList(pageNow - 1, 1);
-                }
-                else {
-                    getProductList(pageNow - 1, 1);
-                }
-            }
-        });
-
-        btnApply.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                getFilteredProductList(0, null);
-                applyFilter = true;
-                edtPage.setText("" + 1);
-                Toast.makeText(MainActivity.this, "Filter applied successfully", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                getProductList(0, 1);
-                edtPage.setText("" + 1);
-                applyFilter = false;
-                Toast.makeText(MainActivity.this, "Filter cancelled", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
-    public void getFilteredProductList(int page, Integer pageSize){
-        String productName = edtName.getText().toString();
-        Integer minPrice;
-        Integer maxPrice;
-        if(edtLowestPrice.getText().toString().equals("")){
-            minPrice = null;
-        }
-        else {
-            minPrice = Integer.valueOf(edtLowestPrice.getText().toString());
-        }
-
-        if(edtHighestPrice.getText().toString().equals("")){
-            maxPrice = null;
-        }
-        else {
-            maxPrice = Integer.valueOf(edtHighestPrice.getText().toString());
-        }
-        ProductCategory category = getProductCategory(spinner);
+    /**
+     * Merupakan method untuk mengambil balance ketika sudah membayar
+     */
+    public void takeBalance(){
         Response.Listener<String> listener = new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {
-                    productList.clear();
-                    JSONArray object = new JSONArray(response);
-                    Type productListType = new TypeToken<ArrayList<Product>>(){}.getType();
-                    productList = gson.fromJson(response, productListType);
-//                    setListView();
+                    JSONObject object = new JSONObject(response);
+                    account = gson.fromJson(response, Account.class);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        //Ketika tidak menerima response
+        Response.ErrorListener errorListener = new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(MainActivity.this, "ERROR", Toast.LENGTH_SHORT).show();
+            }
+        };
+        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+        queue.add(RequestFactory.getById("account", account.id, listener, errorListener));
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_app, menu);
+        MenuItem addMenu = menu.findItem(R.id.addbox);
+        if (account.store == null) {
+            addMenu.setVisible(false);
+        }
+        return true;
+    }
+
+    /**
+     * Merupakan pengaturan pada toolbar
+     * @param item
+     * @return
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.search) {
+            Toast.makeText(MainActivity.this, "Search Clicked", Toast.LENGTH_LONG).show();
+            return true;
+        } else if (id == R.id.addbox) {
+            Toast.makeText(MainActivity.this, "Add Box Clicked", Toast.LENGTH_LONG).show();
+            Intent i = new Intent(MainActivity.this, CreateProductActivity.class);
+            startActivity(i);
+            return true;
+        } else if (id == R.id.profile) {
+            Toast.makeText(MainActivity.this, "Person Clicked", Toast.LENGTH_LONG).show();
+            Intent i = new Intent(MainActivity.this, AboutMeActivity.class);
+            startActivity(i);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Method untuk menampilkan product listnya sesuai page dan pageSize
+     * @param pageBefore
+     * @param pageSize
+     */
+    public void GetshowProductList(int pageBefore,int pageSize) {
+        Response.Listener<String> stringListener = new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    PList.clear();
+                    JSONArray jsonArray = new JSONArray(response);
+                    Type productlistType = new TypeToken<ArrayList<Product>>() {
+                    }.getType();
+                    PList = gson.fromJson(response, productlistType);
+                    if(PList.isEmpty()){
+                        Toast.makeText(MainActivity.this, "The page is empty!", Toast.LENGTH_SHORT).show();
+                        page--;
+                    }
+                    else{
+                        List<String> productnameList = new ArrayList<>();
+                        for (Product product : PList) {
+                            productnameList.add(product.name);
+                        }
+                        ArrayAdapter adapter = new ArrayAdapter<String>(MainActivity.this, R.layout.row_product_list, productnameList);
+                        listView.setAdapter(adapter);
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -226,77 +539,86 @@ public class MainActivity extends AppCompatActivity {
         Response.ErrorListener errorListener = new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Toast.makeText(MainActivity.this, "ERROR", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, error.toString(), Toast.LENGTH_SHORT).show();
+            }
+        };
+        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+        queue.add(RequestFactory.getPage("product", pageBefore, pageSize, stringListener, errorListener));
+    }
+
+    /**
+     * Method untuk menampilkan product listnya setelah difilter
+     * @param pageSize
+     */
+    public void GetshowFilterProductList(int page, int pageSize) {
+        String filteredname = editName.getText().toString();
+        Integer minP;
+        Integer maxP;
+        if (lowestPrice.getText().toString().equals("")) {
+            minP = null;
+        } else {
+            minP = Integer.valueOf(lowestPrice.getText().toString());
+        }
+
+        if (highestPrice.getText().toString().equals("")) {
+            maxP = null;
+        } else {
+            maxP = Integer.valueOf(highestPrice.getText().toString());
+        }
+        ProductCategory category = ProductCategory.KITCHEN;
+        String productcategory = spinner.getSelectedItem().toString();
+        for (ProductCategory p : ProductCategory.values()) {
+            if (p.toString().equals(productcategory)) {
+                category = p;
+            }
+        }
+
+        Response.Listener<String> listener = new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    PList.clear();
+                    JSONArray jsonArray = new JSONArray(response);
+                    Type PListType = new TypeToken<ArrayList<Product>>(){}.getType();
+                    PList = gson.fromJson(response, PListType);
+//                    if(!PList.isEmpty()){
+                        List<String> productnameList = new ArrayList<>();
+                        for (Product product : PList) {
+                            productnameList.add(product.name);
+                        }
+                        ArrayAdapter adapter = new ArrayAdapter<String>(MainActivity.this, R.layout.row_product_list, productnameList);
+                        listView.setAdapter(adapter);
+                        Toast.makeText(MainActivity.this, "Filter success!", Toast.LENGTH_SHORT).show();
+//                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        };
+        Response.ErrorListener errorListener = new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(MainActivity.this, "Error! Already in the last filter!", Toast.LENGTH_SHORT).show();
             }
         };
         FilterRequest filterRequest;
-        if (maxPrice == null && minPrice == null){
-            Log.d("MASUK IF 1", "CEK 1");
-            filterRequest = new FilterRequest(page, account.id, productName, category, listener, errorListener);
-        }
-        else if(maxPrice == null){
-            Log.d("MASUK IF 2", "CEK 2");
-            filterRequest = new FilterRequest(page, account.id, productName, minPrice, category, listener, errorListener);
-        }
-        else if(minPrice == null){
-            Log.d("MASUK IF 3", "CEK 3");
-            filterRequest = new FilterRequest(productName, page, account.id, maxPrice, category, listener, errorListener);
-        }
-        else {
-            Log.d("MASUK IF 4", "CEK 4");
-            filterRequest = new FilterRequest(page, account.id, productName, minPrice, maxPrice, category, listener, errorListener);
+        if (maxP == null && minP == null) {
+            filterRequest = new FilterRequest(page, pageSize, account.id, filteredname, category, listener, errorListener);
+        } else if (maxP == null) {
+            filterRequest = new FilterRequest(page, pageSize, account.id, minP, filteredname, category, listener, errorListener);
+        } else if (minP == null) {
+            filterRequest = new FilterRequest(filteredname, page, account.id, maxP, category, listener, errorListener);
+        } else {
+            filterRequest = new FilterRequest(page, account.id, filteredname, minP, maxP, category, listener, errorListener);
         }
         RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
         queue.add(filterRequest);
     }
 
-    public void getProductList(int page, int pageSize){
-        Response.Listener<String> listener = new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    productList.clear();
-                    JSONArray object = new JSONArray(response);
-                    Type productListType = new TypeToken<ArrayList<Product>>(){}.getType();
-                    productList = gson.fromJson(response, productListType);
-//                    setListView();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                for (Product product : productList) {
-                    productNameList.add(product.name);
-                }
-                Log.d("ProductFragment", "Array Size: " + productNameList.size());
-                ArrayAdapter adapter = new ArrayAdapter<String>(MainActivity.this, R.layout.row_product_list, productNameList);
-                listView.setAdapter(adapter);
-            }
-        };
-
-        Response.ErrorListener errorListener = new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(MainActivity.this, "ERROR", Toast.LENGTH_SHORT).show();
-            }
-        };
-
-        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-        queue.add(RequestFactory.getPage("product", page, pageSize, listener, errorListener));
-    }
-
-//    public void setListView(){
-//        List<String> productNameList = new ArrayList<>();
-//        for(Product p : productList){
-//            productNameList.add(p.name);
-//        }
-//        Log.d("UKURAN ARRAY", "" + productNameList.size());
-//        ArrayAdapter adapter = new ArrayAdapter<String>(MainActivity.this, R.layout.row_product_list, productNameList);
-//        listView.setAdapter(adapter);
-//        customAdapter = new CustomAdapter(productList, this);
-//        listView.setAdapter(customAdapter);
-//    }
 
     public ProductCategory getProductCategory(Spinner spinner){
-        ProductCategory category = ProductCategory.BOOK;                                //inisialisasi asal
+        ProductCategory category = ProductCategory.BOOK;
         String productCategory = spinner.getSelectedItem().toString();
         for(ProductCategory pc : ProductCategory.values()){
             if(pc.toString().equals(productCategory)){
@@ -306,146 +628,4 @@ public class MainActivity extends AppCompatActivity {
         return category;
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_app, menu);
-        MenuItem search = menu.findItem(R.id.search);
-        MenuItem addMenu = menu.findItem(R.id.addbox);
-        if(account.store == null){
-            addMenu.setVisible(false);
-        }
-
-        SearchView searchView = (SearchView) search.getActionView();
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-//                customAdapter.getFilter().filter(newText);
-                return true;
-            }
-        });
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        setActivityMode(item.getItemId());
-        return super.onOptionsItemSelected(item);
-    }
-
-    public void setActivityMode(int selectMode){
-        Intent intent;
-        switch (selectMode){
-            case R.id.search:
-                break;
-
-            case R.id.addbox:
-                intent = new Intent(MainActivity.this, CreateProductActivity.class);
-                startActivity(intent);
-                break;
-
-            case R.id.profile:
-                intent = new Intent(MainActivity.this, AboutMeActivity.class);
-                startActivity(intent);
-                break;
-        }
-    }
-
-//    public class CustomAdapter extends BaseAdapter implements Filterable {
-//        private List<Product> productList;
-//        private List<Product> productListFiltered;
-//        private Context context;
-//
-//        public CustomAdapter(List<Product> productList, Context context) {
-//            this.productList = productList;
-//            this.productListFiltered = productList;
-//            this.context = context;
-//        }
-//
-//        @Override
-//        public int getCount() {
-//            return productListFiltered.size();
-//        }
-//
-//        @Override
-//        public Object getItem(int i) {
-//            return null;
-//        }
-//
-//        @Override
-//        public long getItemId(int i) {
-//            return i;
-//        }
-
-//        @Override
-//        public View getView(int i, View view, ViewGroup viewGroup) {
-//            View v = getLayoutInflater().inflate(R.layout.row_list_product, null);
-//
-//            TextView tvProductName = v.findViewById(R.id.tv_row_product_name);
-//            TextView tvProductPrice = v.findViewById(R.id.tv_row_product_price);
-//            String productConditionUsed;
-//
-//            if(productListFiltered.get(i).conditionUsed){
-//                productConditionUsed = "NEW";
-//            }
-//            else {
-//                productConditionUsed = "USED";
-//            }
-//
-//            tvProductName.setText(productListFiltered.get(i).name + " (" + productConditionUsed + ")");
-//            tvProductPrice.setText("Rp " + productListFiltered.get(i).price);
-//
-//            v.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    Toast.makeText(MainActivity.this, productListFiltered.get(i).name, Toast.LENGTH_SHORT).show();
-//                }
-//            });
-//            return v;
-//        }
-
-//        @Override
-//        public Filter getFilter() {
-//            Filter filter = new Filter() {
-//                @Override
-//                protected FilterResults performFiltering(CharSequence charSequence) {
-//                    FilterResults filterResults = new FilterResults();
-//
-//                    if(charSequence == null || charSequence.length() == 0){
-//                        filterResults.count = productList.size();
-//                        filterResults.values = productList;
-//                    }
-//                    else {
-//                        String searchStr = charSequence.toString().toLowerCase();
-//                        Log.d("CHAR DI SEARCH", searchStr);
-//                        List<Product> resultData = new ArrayList<>();
-//
-//                        for(Product p : productList){
-//                            Log.d("NAMA PRODUK", p.name);
-//                            if(p.name.toLowerCase().contains(searchStr)){
-//                                resultData.add(p);
-//                            }
-//                            filterResults.count = resultData.size();
-//                            filterResults.values = resultData;
-//                        }
-//
-//                        filterResults.count = resultData.size();
-//                        filterResults.values = resultData;
-//                    }
-//                    return filterResults;
-//                }
-//
-//                @Override
-//                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-//                    productListFiltered = (List<Product>) filterResults.values;
-//                    notifyDataSetChanged();
-//                }
-//            };
-//            return filter;
-//        }
-//    }
 }

@@ -17,6 +17,12 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Merupakan Class yang mengatur Activity Register untuk melakukan register
+ * @author Ahmad Zufar A
+ * @version 17 Desember 2021
+ */
+
 public class RegisterActivity extends AppCompatActivity {
 
     @Override

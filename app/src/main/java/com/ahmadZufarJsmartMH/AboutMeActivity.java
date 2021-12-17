@@ -24,6 +24,12 @@ import com.google.gson.Gson;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Merupakan Class yang mengatur Activity About Me untuk tampilan aktivitas account
+ * @author Ahmad Zufar A
+ * @version 17 Desember 2021
+ */
+
 public class AboutMeActivity extends AppCompatActivity {
 
     private Button b1;
@@ -33,6 +39,7 @@ public class AboutMeActivity extends AppCompatActivity {
     private Button b3;
     private EditText edtTopup;
     private Button btnTopup;
+    private Button btnInvoice;
     private Button btnRegisterStore;
     private Button btnCancelStore;
     private EditText NameStore;
@@ -61,6 +68,7 @@ public class AboutMeActivity extends AppCompatActivity {
         PhoneStore = findViewById(R.id.phoneRegisterStore);
         edtTopup = findViewById(R.id.edtTopup);
         btnTopup = findViewById(R.id.butTopupAccountDetails);
+        btnInvoice = findViewById(R.id.butGoInvoice);
         b1 = findViewById(R.id.butRegisterStore);
         l2 = findViewById(R.id.formRegisterStore);
         l3 = findViewById(R.id.hasilRegisterStore);
@@ -93,6 +101,14 @@ public class AboutMeActivity extends AppCompatActivity {
                 b1.setVisibility(v.GONE);
                 l2.setVisibility(v.VISIBLE);
                 Toast.makeText(getApplicationContext(), "Register Store di click", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnInvoice.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent moveIntent = new Intent(AboutMeActivity.this, InvoiceActivity.class);
+                startActivity(moveIntent);
             }
         });
 
@@ -131,6 +147,10 @@ public class AboutMeActivity extends AppCompatActivity {
         btnRegisterStore.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                account = LoginActivity.getLoggedAccount();
+                String name = NameStore.getText().toString();
+                String address = AddressStore.getText().toString();
+                String phone = PhoneStore.getText().toString();
                 Response.Listener<String> listener = new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -153,10 +173,7 @@ public class AboutMeActivity extends AppCompatActivity {
                         Toast.makeText(AboutMeActivity.this, "Register Store Gagal", Toast.LENGTH_SHORT).show();
                     }
                 };
-                account = LoginActivity.getLoggedAccount();
-                String name = tvHasilName.getText().toString();
-                String address = tvHasilAddress.getText().toString();
-                String phone = tvHasilPhone.getText().toString();
+
                 RegisterStoreRequest registerStoreRequest = new RegisterStoreRequest(account.id, name, address, phone, listener, errorListener);
                 RequestQueue queue = Volley.newRequestQueue(AboutMeActivity.this);
                 queue.add(registerStoreRequest);
@@ -187,4 +204,11 @@ public class AboutMeActivity extends AppCompatActivity {
         RequestQueue queue = Volley.newRequestQueue(AboutMeActivity.this);
         queue.add(RequestFactory.getById("account", account.id, listener, errorListener));
     }
+
+    @Override
+    protected void onResume() {
+        refreshBalance();
+        super.onResume();
+    }
+
 }
