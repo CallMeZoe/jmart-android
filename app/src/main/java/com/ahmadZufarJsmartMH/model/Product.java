@@ -1,5 +1,11 @@
 package com.ahmadZufarJsmartMH.model;
 
+/**
+ * Merupakan Class sebagai model untuk payment
+ * @author Ahmad Zufar A
+ * @version 17 Desember 2021
+ */
+
 public class Product extends Serializable {
     public int accountId;
     public double discount;

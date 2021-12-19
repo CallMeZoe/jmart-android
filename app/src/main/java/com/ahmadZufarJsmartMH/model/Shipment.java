@@ -2,6 +2,12 @@ package com.ahmadZufarJsmartMH.model;
 
 import java.text.SimpleDateFormat;
 
+/**
+ * Merupakan Class sebagai model untuk shipment
+ * @author Ahmad Zufar A
+ * @version 17 Desember 2021
+ */
+
 public class Shipment {
     public static final Plan INSTANT = new Plan((byte)(1 << 0));
     public static final Plan SAME_DAY = new Plan((byte)(1 << 1));

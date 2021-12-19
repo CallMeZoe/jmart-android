@@ -4,6 +4,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
+/**
+ * Merupakan Class sebagai model untuk payment
+ * @author Ahmad Zufar A
+ * @version 17 Desember 2021
+ */
+
 public class Payment extends Invoice{
     public ArrayList<Record> history = new ArrayList<>();
     public int productCount;

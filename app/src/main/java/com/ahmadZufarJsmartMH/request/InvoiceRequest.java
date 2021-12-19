@@ -6,6 +6,12 @@ import com.android.volley.toolbox.StringRequest;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Merupakan Class untuk memberikan request terhadap backend mengenai pembuatan invoice
+ * @author Ahmad Zufar A
+ * @version 17 Desember 2021
+ */
+
 public class InvoiceRequest extends StringRequest {
     private static final String URL_FORMAT = "http://192.168.100.10:1805/payment/%s?%s=%s";
     private final Map<String, String> params;

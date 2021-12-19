@@ -6,6 +6,12 @@ import com.android.volley.toolbox.StringRequest;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Merupakan Class untuk memberikan request terhadap backend mengenai pembuatan payment
+ * @author Ahmad Zufar A
+ * @version 17 Desember 2021
+ */
+
 public class PaymentRequest extends StringRequest {
     private static final String CREATE_URL = "http://192.168.100.10:1805/payment/create";
     public static final String SUBMIT_URL = "http://192.168.100.10:1805/payment/%d/submit";
